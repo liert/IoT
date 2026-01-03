@@ -1,0 +1,11 @@
+#ifndef WIN32_SOCKET_H
+#define WIN32_SOCKET_H
+#include "first.h"
+
+#define ECONNRESET WSAECONNRESET
+#define EINPROGRESS WSAEINPROGRESS
+#define EALREADY WSAEALREADY
+#define ECONNABORTED WSAECONNABORTED
+#define ioctl ioctlsocket
+
+#endif
