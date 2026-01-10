@@ -1,0 +1,55 @@
+Index: linux-6.6.110/drivers/mtd/nand/raw/nandsim.c
+===================================================================
+--- linux-6.6.110.orig/drivers/mtd/nand/raw/nandsim.c
++++ linux-6.6.110/drivers/mtd/nand/raw/nandsim.c
+@@ -75,6 +75,9 @@
+ #ifndef CONFIG_NANDSIM_MAX_PARTS
+ #define CONFIG_NANDSIM_MAX_PARTS  32
+ #endif
++#ifndef CONFIG_NANDSIM_MAX_NAMES
++#define CONFIG_NANDSIM_MAX_NAMES  32
++#endif
+ 
+ static uint access_delay   = CONFIG_NANDSIM_ACCESS_DELAY;
+ static uint programm_delay = CONFIG_NANDSIM_PROGRAMM_DELAY;
+@@ -87,6 +90,8 @@ static uint log            = CONFIG_NAND
+ static uint dbg            = CONFIG_NANDSIM_DBG;
+ static unsigned long parts[CONFIG_NANDSIM_MAX_PARTS];
+ static unsigned int parts_num;
++static char *names[CONFIG_NANDSIM_MAX_NAMES];
++static int names_num = 0;
+ static char *badblocks = NULL;
+ static char *weakblocks = NULL;
+ static char *weakpages = NULL;
+@@ -119,6 +124,7 @@ module_param(do_delays,      uint, 0400)
+ module_param(log,            uint, 0400);
+ module_param(dbg,            uint, 0400);
+ module_param_array(parts, ulong, &parts_num, 0400);
++module_param_array(names, charp, &names_num, 0400);
+ module_param(badblocks,      charp, 0400);
+ module_param(weakblocks,     charp, 0400);
+ module_param(weakpages,      charp, 0400);
+@@ -144,6 +150,7 @@ MODULE_PARM_DESC(do_delays,      "Simula
+ MODULE_PARM_DESC(log,            "Perform logging if not zero");
+ MODULE_PARM_DESC(dbg,            "Output debug information if not zero");
+ MODULE_PARM_DESC(parts,          "Partition sizes (in erase blocks) separated by commas");
++MODULE_PARM_DESC(names,          "Names of the partitions separated by commas");
+ /* Page and erase block positions for the following parameters are independent of any partitions */
+ MODULE_PARM_DESC(badblocks,      "Erase blocks that are initially marked bad, separated by commas");
+ MODULE_PARM_DESC(weakblocks,     "Weak erase blocks [: remaining erase cycles (defaults to 3)]"
+@@ -627,9 +634,13 @@ static void ns_free_device(struct nandsi
+ 	}
+ }
+ 
+-static char __init *ns_get_partition_name(int i)
++static char *ns_get_partition_name(int i)
+ {
+-	return kasprintf(GFP_KERNEL, "NAND simulator partition %d", i);
++    if (i < names_num && names[i] && strlen(names[i]) > 0) {
++        return kasprintf(GFP_KERNEL, "%s", names[i]);
++    }
++    
++    return kasprintf(GFP_KERNEL, "NAND simulator partition %d", i);
+ }
+ 
+ /*
